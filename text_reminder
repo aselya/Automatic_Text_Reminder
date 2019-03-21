@@ -1,0 +1,159 @@
+import pandas as pd
+from twilio.rest import Client
+import arrow
+from datetime import datetime, timedelta
+EMPLOYEE = 'Aaron'
+
+CURRENTDATE = arrow.now().format('YYYY-MM-DD')
+
+print('date: ' + str(CURRENTDATE))
+
+
+def get_times(df , row):
+  times = ''
+  #if col value = name
+  print("get times df:")
+  print(df)
+
+  for column in df:
+    if str(df.iloc[row][column]) == str(EMPLOYEE):
+      times = times + df.iloc[-1][column]
+      #times += str(df[column])
+  print('Times:' +str(times))
+  return times
+
+def is_it_today(df):
+  row = 0
+  col = 1
+  found =  False
+  print("is it today")
+  while found != True:
+    current_cell = df.iloc[row][col]
+    print('current cell:' + str(current_cell))
+    date_test = str(current_cell).split(" ")[0]
+    print('date test:' + str(date_test))
+    if date_test == CURRENTDATE:
+      print("The date has been found")
+
+      found = True
+      print(df.iloc[[row]])
+      times = get_times(df ,  row )
+      #get_times(df.iloc[[row]])
+      return times
+    else:
+      row += 1
+
+
+def send_text( time):
+# Your Account Sid and Auth Token from twilio.com/console
+  account_sid = ''
+  auth_token = ''
+  client = Client(account_sid, auth_token)
+
+  message = client.messages \
+    .create(
+         body='Your off phone time is approaching, enjoy your break!',
+         from_='',
+         to=''
+     )
+
+  print(message.sid)
+
+def is_it_time_to_send_text(times):
+  on_counter = False
+  time_to_text = False
+  #splits the times to find if they are on the counter
+  list_of_times = times.split(' ')
+  first_time = list_of_times[0]
+  first_time = first_time.split('-')
+  last_time = list_of_times[-1]
+  last_time = last_time.split('-')
+  print(list_of_times)
+  print(first_time)
+  print(last_time)
+  #send_text(times)
+
+  if first_time == last_time:
+    am_pm_counter = '9:00'
+    on_counter = True
+    print("on counter")
+    first_datetime =datetime.strptime(first_time[0],'%H:%M')
+    #makes the time correct
+    if (first_datetime <  datetime.strptime(am_pm_counter,'%H:%M')):
+      print("updating date: " + str(first_datetime.time()))
+      first_datetime = (first_datetime + timedelta(hours=12))
+      print("updated date: " + str(first_datetime.time()))
+
+    p = (first_datetime - timedelta(minutes=15)).time()
+    first_datetime= first_datetime.time()
+    print(first_datetime)
+    print(p)
+    print(datetime.now().time())
+
+    if first_datetime > datetime.now().time() and datetime.now().time() > p:
+      print("time to text")
+      time_to_text = True
+      return time_to_text
+    else:
+      print('not time to text')
+      return time_to_text
+  else:
+    first_datetime =datetime.strptime(first_time[0],'%H:%M')
+    last_datetime =datetime.strptime(last_time[0],'%H:%M')
+
+    p = (first_datetime - timedelta(minutes=15)).time()
+    p2 = (last_datetime - timedelta(minutes=15)+timedelta(hours=12)).time()
+    first_datetime= first_datetime.time()
+    last_datetime = last_datetime.time()
+    print(first_datetime)
+    print(last_datetime)
+    print(p)
+    print(p2)
+    print(datetime.now().time())
+
+    if first_datetime > datetime.now().time() and datetime.now().time() < p:
+      print("time to text")
+      time_to_text = True
+      return time_to_text
+    elif first_datetime > datetime.now().time() and datetime.now().time() > p:
+      print("time to text")
+      time_to_text = True
+      return time_to_text
+
+    else:
+      print("not time to text")
+      return time_to_text
+
+
+
+  #if !on_counter:
+
+
+
+
+def csv_from_excel():
+  data_xls = pd.read_excel(yourFile, 'Sheet1', index_col=None, skiprows=[0])
+  data_xls = data_xls.drop([0], axis=0)
+  #data_xls.to_csv(yourNewFile, encoding='utf-8')
+  times = is_it_today(data_xls)
+  print(times)
+  send = is_it_time_to_send_text(times)
+
+  if send == True:
+    send_text(times)
+
+  print (datetime.now().time())
+
+  return data_xls
+
+
+csv_from_excel()
+
+
+
+
+
+#send_text()
+
+#get csv and make into a dataframe
+#def convert_to_data_frame (file):
